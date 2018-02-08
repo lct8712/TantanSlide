@@ -9,8 +9,6 @@ import android.util.AttributeSet;
 import android.util.Pair;
 import android.view.MotionEvent;
 
-import com.chentian.tantanslide.R;
-
 /**
  * @author chentian
  */
@@ -42,7 +40,6 @@ public class SlidableImage extends AppCompatImageView {
 
         mainThreadHandler = new Handler(Looper.getMainLooper());
         velocityHelper = new VelocityHelper();
-        setBackgroundResource(R.drawable.photo_with_frame);
     }
 
     @Override
