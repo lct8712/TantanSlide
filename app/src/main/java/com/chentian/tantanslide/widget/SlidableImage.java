@@ -105,6 +105,10 @@ public class SlidableImage extends AppCompatImageView {
         this.statusListener = statusListener;
     }
 
+    public void destroy() {
+        this.statusListener = null;
+    }
+
     private void handleEventDown(MotionEvent event) {
         isAnimating = false;
         lastX = event.getRawX();

@@ -92,6 +92,7 @@ public class SlideImageContainer extends FrameLayout {
                 }
 
                 imageList.remove(slidableImage);
+                slidableImage.destroy();
                 if (imageList.size() < IMAGE_COUNT_PER_PAGE / 2) {
                     loadMore();
                 }
