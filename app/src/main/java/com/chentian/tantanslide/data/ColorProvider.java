@@ -13,6 +13,7 @@ public class ColorProvider {
 
     private final int[] colors;
     private int colorIndex;
+    private int totalCount;
 
     public static ColorProvider getInstance(Context context) {
         if (instance == null) {
@@ -36,5 +37,9 @@ public class ColorProvider {
         int result = colors[colorIndex++];
         colorIndex %= colors.length;
         return result;
+    }
+
+    public String getNextId() {
+        return String.valueOf(totalCount++);
     }
 }

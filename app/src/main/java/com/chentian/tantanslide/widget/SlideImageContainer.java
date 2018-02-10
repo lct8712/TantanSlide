@@ -62,6 +62,7 @@ public class SlideImageContainer extends FrameLayout {
         slidableImage.setBackgroundResource(R.drawable.photo_with_frame);
         GradientDrawable shapeDrawable = (GradientDrawable) slidableImage.getBackground();
         shapeDrawable.setColor(ColorProvider.getInstance(getContext()).getNextColor());
+        slidableImage.setId(ColorProvider.getInstance(getContext()).getNextId());
 
         addView(slidableImage, layoutParams);
 

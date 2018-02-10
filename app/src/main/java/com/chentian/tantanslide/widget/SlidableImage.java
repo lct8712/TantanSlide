@@ -2,6 +2,9 @@ package com.chentian.tantanslide.widget;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
@@ -10,10 +13,13 @@ import android.util.AttributeSet;
 import android.util.Pair;
 import android.view.MotionEvent;
 
+import com.chentian.tantanslide.R;
+
 /**
  * @author chentian
  */
 public class SlidableImage extends AppCompatImageView {
+
 
     public interface StatusListener {
 
@@ -21,12 +27,7 @@ public class SlidableImage extends AppCompatImageView {
 
     }
 
-    private static final int MIN_MOVE = 2;
-    private static final float MIN_TRANSLATION_TO_NORMAL = 1.1f;
     private static final long FRAME_DELAY_MILLIS = 16L;
-    private static final float MIN_SPEED_FOR_GO_AWAY = 2f;
-    private static final float MIN_DIRECTION_SPEED = 5f;
-    private static final int MIN_BORDER_WIDTH = 250;
 
     private float lastX;
     private float lastY;
@@ -34,6 +35,10 @@ public class SlidableImage extends AppCompatImageView {
     private boolean isGoAway;
     private Handler mainThreadHandler;
     private VelocityHelper velocityHelper;
+
+    private Paint textPaint;
+    private String id;
+    private Rect textBounds;
 
     private StatusListener statusListener;
 
@@ -50,6 +55,9 @@ public class SlidableImage extends AppCompatImageView {
 
         mainThreadHandler = new Handler(Looper.getMainLooper());
         velocityHelper = new VelocityHelper();
+        textPaint = new Paint();
+        textPaint.setColor(getResources().getColor(R.color.window_background));
+        textBounds = new Rect();
     }
 
     @Override
@@ -58,6 +66,9 @@ public class SlidableImage extends AppCompatImageView {
 
         int size = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
         setMeasuredDimension(size, size);
+
+        textPaint.setTextSize(size / 10);
+        textPaint.getTextBounds(id, 0, id.length(), textBounds);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -83,6 +94,13 @@ public class SlidableImage extends AppCompatImageView {
         return true;
     }
 
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        canvas.drawText(id, (getWidth() - textBounds.width()) / 2, (getHeight() + textBounds.height()) / 2, textPaint);
+    }
+
     private void handleEventDown(MotionEvent event) {
         lastX = event.getRawX();
         lastY = event.getRawY();
@@ -94,7 +112,8 @@ public class SlidableImage extends AppCompatImageView {
     private void handleEventMove(MotionEvent event) {
         float dx = event.getRawX() - lastX;
         float dy = event.getRawY() - lastY;
-        if (Math.abs(dx) >= MIN_MOVE || Math.abs(dy) >= MIN_MOVE) {
+        final int minMove = 2;
+        if (Math.abs(dx) >= minMove || Math.abs(dy) >= minMove) {
             setTranslationX(getTranslationX() + dx);
             setTranslationY(getTranslationY() + dy);
             lastX = event.getRawX();
@@ -107,12 +126,14 @@ public class SlidableImage extends AppCompatImageView {
     private void handleEventUp(MotionEvent event) {
         isAnimating = true;
         velocityHelper.record(event.getRawX(), event.getRawY());
-        if (velocityHelper.computeVelocity() >= MIN_SPEED_FOR_GO_AWAY) {
+        final float minSpeedForGoAway = 2f;
+        if (velocityHelper.computeVelocity() >= minSpeedForGoAway) {
             Pair<Float, Float> velocity = velocityHelper.computeVelocityWithDirection();
             float multi = 15f;
             float maxDelta = Math.max(Math.abs(velocity.first), Math.abs(velocity.second));
-            if (Math.abs(maxDelta) < MIN_DIRECTION_SPEED) {
-                multi *= MIN_DIRECTION_SPEED / Math.abs(maxDelta);
+            final float minDirectionSpeed = 5f;
+            if (Math.abs(maxDelta) < minDirectionSpeed) {
+                multi *= minDirectionSpeed / Math.abs(maxDelta);
             }
             float dx = velocity.first * multi;
             float dy = velocity.second * multi;
@@ -135,6 +156,10 @@ public class SlidableImage extends AppCompatImageView {
         this.statusListener = statusListener;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     private void notifyStatus(boolean isToRight) {
         if (statusListener != null) {
             statusListener.onMoveAway(isToRight);
@@ -146,8 +171,9 @@ public class SlidableImage extends AppCompatImageView {
     }
 
     private boolean isCloseToBorder() {
-        return (getWidth() - Math.abs(getTranslationX()) <= MIN_BORDER_WIDTH) ||
-            (getHeight() - Math.abs(getTranslationY()) <= MIN_BORDER_WIDTH);
+        final int minBorderWidth = 250;
+        return (getWidth() - Math.abs(getTranslationX()) <= minBorderWidth) ||
+            (getHeight() - Math.abs(getTranslationY()) <= minBorderWidth);
     }
 
     private void goAway(final float dx, final float dy) {
@@ -173,7 +199,8 @@ public class SlidableImage extends AppCompatImageView {
 
         float dx = Math.abs(getTranslationX() * 0.15f) + 1.0f;
         float dy = Math.abs(getTranslationY() * 0.15f) + 1.0f;
-        if (dx <= MIN_TRANSLATION_TO_NORMAL && dy <= MIN_TRANSLATION_TO_NORMAL) {
+        final float minTranslationToNormal = 1.1f;
+        if (dx <= minTranslationToNormal && dy <= minTranslationToNormal) {
             return;
         }
 
