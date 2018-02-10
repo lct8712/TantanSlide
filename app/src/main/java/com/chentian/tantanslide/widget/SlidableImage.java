@@ -18,13 +18,26 @@ import android.view.MotionEvent;
 public class SlidableImage extends AppCompatImageView {
 
     public interface StatusListener {
-        void onMoveAway(boolean isToRight);
+
+        /**
+         * 被滑动时触发，用来让第二个图片联动
+         */
+        void onMove(float translationX, float translationY);
+
+        /**
+         * 被划出
+         *
+         * @param isToRight 划出的方向是向左还是向右
+         */
+        void onGoAway(boolean isToRight);
     }
 
     private static final long FRAME_DELAY_MILLIS = 16L;
 
     private float lastX;
     private float lastY;
+    private float eventDownY;
+
     private boolean isAnimating;
     private boolean isGoAway;
     private Handler mainThreadHandler;
@@ -78,26 +91,48 @@ public class SlidableImage extends AppCompatImageView {
         return true;
     }
 
+    public void handlePassiveMove(float translationX, float translationY) {
+        setTranslationX(-translationX / 15);
+        setTranslationY(-translationY / 40);
+    }
+
+    public void resetPositionWithAnmi() {
+        isAnimating = true;
+        backToCenter();
+    }
+
+    public void setStatusListener(StatusListener statusListener) {
+        this.statusListener = statusListener;
+    }
+
     private void handleEventDown(MotionEvent event) {
+        isAnimating = false;
         lastX = event.getRawX();
         lastY = event.getRawY();
+        eventDownY = event.getY();
         velocityHelper.reset();
         velocityHelper.record(event.getRawX(), event.getRawY());
-        isAnimating = false;
     }
 
     private void handleEventMove(MotionEvent event) {
+        isAnimating = false;
         float dx = event.getRawX() - lastX;
         float dy = event.getRawY() - lastY;
         final int minMove = 2;
-        if (Math.abs(dx) >= minMove || Math.abs(dy) >= minMove) {
-            setTranslationX(getTranslationX() + dx);
-            setTranslationY(getTranslationY() + dy);
-            lastX = event.getRawX();
-            lastY = event.getRawY();
-            velocityHelper.record(event.getRawX(), event.getRawY());
+        if (Math.abs(dx) < minMove && Math.abs(dy) < minMove) {
+            return;
         }
-        isAnimating = false;
+
+        // translation
+        setTranslationX(getTranslationX() + dx);
+        setTranslationY(getTranslationY() + dy);
+        lastX = event.getRawX();
+        lastY = event.getRawY();
+        velocityHelper.record(event.getRawX(), event.getRawY());
+        notifyOnMove();
+
+        // rotate
+        updateRotation();
     }
 
     private void handleEventUp(MotionEvent event) {
@@ -115,28 +150,18 @@ public class SlidableImage extends AppCompatImageView {
             float dx = velocity.first * multi;
             float dy = velocity.second * multi;
             goAway(dx, dy);
-            notifyStatus(dx >= 0);
+            notifyGoAway(dx >= 0);
             isGoAway = true;
 
         } else if (isCloseToBorder()) {
             float dx = 15 * getSign(getTranslationX());
             float dy = 15 * getSign(getTranslationY());
             goAway(dx, dy);
-            notifyStatus(dx >= 0);
+            notifyGoAway(dx >= 0);
             isGoAway = true;
 
         } else {
-            resetTranslation();
-        }
-    }
-
-    public void setStatusListener(StatusListener statusListener) {
-        this.statusListener = statusListener;
-    }
-
-    private void notifyStatus(boolean isToRight) {
-        if (statusListener != null) {
-            statusListener.onMoveAway(isToRight);
+            backToCenter();
         }
     }
 
@@ -166,7 +191,7 @@ public class SlidableImage extends AppCompatImageView {
         }, FRAME_DELAY_MILLIS);
     }
 
-    private void resetTranslation() {
+    private void backToCenter() {
         if (!isAnimating) {
             return;
         }
@@ -187,12 +212,38 @@ public class SlidableImage extends AppCompatImageView {
         setTranslationX(getTranslationX() - dx);
         setTranslationY(getTranslationY() - dy);
 
+        updateRotation();
+        notifyOnMove();
+
         mainThreadHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                resetTranslation();
+                backToCenter();
             }
         }, FRAME_DELAY_MILLIS);
-        //Log.d("chentian", Math.round(getTranslationX()) + ", " + Math.round(getTranslationY()));
+    }
+
+    private void updateRotation() {
+        if (Math.abs(getTranslationX()) <= 0) {
+            return;
+        }
+
+        float rotation = getTranslationX() / getWidth() / 2 * 30;
+        if (eventDownY > getHeight() / 2) {
+            rotation *= -1;
+        }
+        setRotation(rotation);
+    }
+
+    private void notifyOnMove() {
+        if (statusListener != null) {
+            statusListener.onMove(getTranslationX(), getTranslationY());
+        }
+    }
+
+    private void notifyGoAway(boolean isToRight) {
+        if (statusListener != null) {
+            statusListener.onGoAway(isToRight);
+        }
     }
 }

@@ -20,6 +20,7 @@ import java.util.List;
 public class SlideImageContainer extends FrameLayout {
 
     private static final int IMAGE_COUNT_PER_PAGE = 10;
+    private static final int IMAGE_MARGIN = 64;
 
     private List<SlidableImage> imageList;
 
@@ -57,7 +58,7 @@ public class SlideImageContainer extends FrameLayout {
         final TestSlidableImage slidableImage = new TestSlidableImage(getContext());
         FrameLayout.LayoutParams layoutParams =
             new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
-        layoutParams.setMargins(32, 32, 32, 32);
+        layoutParams.setMargins(IMAGE_MARGIN, IMAGE_MARGIN, IMAGE_MARGIN, IMAGE_MARGIN);
 
         slidableImage.setBackgroundResource(R.drawable.photo_with_frame);
         GradientDrawable shapeDrawable = (GradientDrawable) slidableImage.getBackground();
@@ -69,13 +70,26 @@ public class SlideImageContainer extends FrameLayout {
 
         slidableImage.setStatusListener(new SlidableImage.StatusListener() {
             @Override
-            public void onMoveAway(boolean isToRight) {
+            public void onMove(float translationX, float translationY) {
+                int index = imageList.indexOf(slidableImage);
+                if (imageList.size() > index) {
+                    imageList.get(index + 1).handlePassiveMove(translationX, translationY);
+                }
+            }
+
+            @Override
+            public void onGoAway(boolean isToRight) {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         removeView(slidableImage);
                     }
                 }, 3 * DateUtils.SECOND_IN_MILLIS);
+
+                int index = imageList.indexOf(slidableImage);
+                if (imageList.size() > index) {
+                    imageList.get(index + 1).resetPositionWithAnmi();
+                }
 
                 imageList.remove(slidableImage);
                 if (imageList.size() < IMAGE_COUNT_PER_PAGE / 2) {
