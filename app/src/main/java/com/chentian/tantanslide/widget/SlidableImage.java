@@ -1,5 +1,6 @@
 package com.chentian.tantanslide.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,6 +15,12 @@ import android.view.MotionEvent;
  */
 public class SlidableImage extends AppCompatImageView {
 
+    public interface StatusListener {
+
+        void onMoveAway(boolean isToRight);
+
+    }
+
     private static final int MIN_MOVE = 2;
     private static final float MIN_TRANSLATION_TO_NORMAL = 1.1f;
     private static final long FRAME_DELAY_MILLIS = 16L;
@@ -24,8 +31,11 @@ public class SlidableImage extends AppCompatImageView {
     private float lastX;
     private float lastY;
     private boolean isAnimating;
+    private boolean isGoAway;
     private Handler mainThreadHandler;
     private VelocityHelper velocityHelper;
+
+    private StatusListener statusListener;
 
     public SlidableImage(Context context) {
         this(context, null);
@@ -50,68 +60,92 @@ public class SlidableImage extends AppCompatImageView {
         setMeasuredDimension(size, size);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        //Log.d("chentian", Math.round(event.getRawX()) + ", " + Math.round(event.getRawY()) + ", " + event.getAction());
-        isAnimating = false;
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN: {
-                lastX = event.getRawX();
-                lastY = event.getRawY();
-                velocityHelper.reset();
-                velocityHelper.record(event.getRawX(), event.getRawY());
-                break;
-            }
-            case MotionEvent.ACTION_MOVE: {
-                float dx = event.getRawX() - lastX;
-                float dy = event.getRawY() - lastY;
-                if (Math.abs(dx) >= MIN_MOVE || Math.abs(dy) >= MIN_MOVE) {
-                    setTranslationX(getTranslationX() + dx);
-                    setTranslationY(getTranslationY() + dy);
-                    lastX = event.getRawX();
-                    lastY = event.getRawY();
-                    velocityHelper.record(event.getRawX(), event.getRawY());
-                }
-                //Log.d("chentian", Math.round(dx) + ", " + Math.round(dy));
-                break;
-            }
-            case MotionEvent.ACTION_UP: {
-                isAnimating = true;
-                velocityHelper.record(event.getRawX(), event.getRawY());
-                if (velocityHelper.computeVelocity() >= MIN_SPEED_FOR_GO_AWAY) {
-                    Pair<Float, Float> velocity = velocityHelper.computeVelocityWithDirection();
-                    float multi = 15f;
-                    float maxDelta = Math.max(Math.abs(velocity.first), Math.abs(velocity.second));
-                    if (Math.abs(maxDelta) < MIN_DIRECTION_SPEED) {
-                        multi *= MIN_DIRECTION_SPEED / Math.abs(maxDelta);
-                    }
-                    float dx = velocity.first * multi;
-                    float dy = velocity.second * multi;
-                    goAway(dx, dy);
-                    //Log.d("chentian", "m: " + Math.round(multi));
-                } else if (closeToBorder()) {
+        if (isGoAway) {
+            return true;
+        }
 
-                    float dx = 15 * getSign(getTranslationX());
-                    float dy = 15 * getSign(getTranslationY());
-                    goAway(dx, dy);
-                    //Log.d("chentian", "close");
-                } else {
-                    resetTranslation();
-                }
-                //Log.d("chentian", "v: " + velocity);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                handleEventDown(event);
                 break;
-            }
+            case MotionEvent.ACTION_MOVE:
+                handleEventMove(event);
+                break;
+            case MotionEvent.ACTION_UP:
+                handleEventUp(event);
+                break;
             default:
                 break;
         }
         return true;
     }
 
+    private void handleEventDown(MotionEvent event) {
+        lastX = event.getRawX();
+        lastY = event.getRawY();
+        velocityHelper.reset();
+        velocityHelper.record(event.getRawX(), event.getRawY());
+        isAnimating = false;
+    }
+
+    private void handleEventMove(MotionEvent event) {
+        float dx = event.getRawX() - lastX;
+        float dy = event.getRawY() - lastY;
+        if (Math.abs(dx) >= MIN_MOVE || Math.abs(dy) >= MIN_MOVE) {
+            setTranslationX(getTranslationX() + dx);
+            setTranslationY(getTranslationY() + dy);
+            lastX = event.getRawX();
+            lastY = event.getRawY();
+            velocityHelper.record(event.getRawX(), event.getRawY());
+        }
+        isAnimating = false;
+    }
+
+    private void handleEventUp(MotionEvent event) {
+        isAnimating = true;
+        velocityHelper.record(event.getRawX(), event.getRawY());
+        if (velocityHelper.computeVelocity() >= MIN_SPEED_FOR_GO_AWAY) {
+            Pair<Float, Float> velocity = velocityHelper.computeVelocityWithDirection();
+            float multi = 15f;
+            float maxDelta = Math.max(Math.abs(velocity.first), Math.abs(velocity.second));
+            if (Math.abs(maxDelta) < MIN_DIRECTION_SPEED) {
+                multi *= MIN_DIRECTION_SPEED / Math.abs(maxDelta);
+            }
+            float dx = velocity.first * multi;
+            float dy = velocity.second * multi;
+            goAway(dx, dy);
+            notifyStatus(dx >= 0);
+            isGoAway = true;
+        } else if (isCloseToBorder()) {
+
+            float dx = 15 * getSign(getTranslationX());
+            float dy = 15 * getSign(getTranslationY());
+            goAway(dx, dy);
+            notifyStatus(dx >= 0);
+            isGoAway = true;
+        } else {
+            resetTranslation();
+        }
+    }
+
+    public void setStatusListener(StatusListener statusListener) {
+        this.statusListener = statusListener;
+    }
+
+    private void notifyStatus(boolean isToRight) {
+        if (statusListener != null) {
+            statusListener.onMoveAway(isToRight);
+        }
+    }
+
     private int getSign(float value) {
         return value >= 0 ? 1 : -1;
     }
 
-    private boolean closeToBorder() {
+    private boolean isCloseToBorder() {
         return (getWidth() - Math.abs(getTranslationX()) <= MIN_BORDER_WIDTH) ||
             (getHeight() - Math.abs(getTranslationY()) <= MIN_BORDER_WIDTH);
     }
