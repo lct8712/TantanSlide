@@ -2,9 +2,6 @@ package com.chentian.tantanslide.widget;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
@@ -13,18 +10,15 @@ import android.util.AttributeSet;
 import android.util.Pair;
 import android.view.MotionEvent;
 
-import com.chentian.tantanslide.R;
-
 /**
+ * 可被左滑右划的 ImageView
+ *
  * @author chentian
  */
 public class SlidableImage extends AppCompatImageView {
 
-
     public interface StatusListener {
-
         void onMoveAway(boolean isToRight);
-
     }
 
     private static final long FRAME_DELAY_MILLIS = 16L;
@@ -35,10 +29,6 @@ public class SlidableImage extends AppCompatImageView {
     private boolean isGoAway;
     private Handler mainThreadHandler;
     private VelocityHelper velocityHelper;
-
-    private Paint textPaint;
-    private String id;
-    private Rect textBounds;
 
     private StatusListener statusListener;
 
@@ -55,9 +45,6 @@ public class SlidableImage extends AppCompatImageView {
 
         mainThreadHandler = new Handler(Looper.getMainLooper());
         velocityHelper = new VelocityHelper();
-        textPaint = new Paint();
-        textPaint.setColor(getResources().getColor(R.color.window_background));
-        textBounds = new Rect();
     }
 
     @Override
@@ -66,9 +53,6 @@ public class SlidableImage extends AppCompatImageView {
 
         int size = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
         setMeasuredDimension(size, size);
-
-        textPaint.setTextSize(size / 10);
-        textPaint.getTextBounds(id, 0, id.length(), textBounds);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -92,13 +76,6 @@ public class SlidableImage extends AppCompatImageView {
                 break;
         }
         return true;
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
-        canvas.drawText(id, (getWidth() - textBounds.width()) / 2, (getHeight() + textBounds.height()) / 2, textPaint);
     }
 
     private void handleEventDown(MotionEvent event) {
@@ -140,13 +117,14 @@ public class SlidableImage extends AppCompatImageView {
             goAway(dx, dy);
             notifyStatus(dx >= 0);
             isGoAway = true;
-        } else if (isCloseToBorder()) {
 
+        } else if (isCloseToBorder()) {
             float dx = 15 * getSign(getTranslationX());
             float dy = 15 * getSign(getTranslationY());
             goAway(dx, dy);
             notifyStatus(dx >= 0);
             isGoAway = true;
+
         } else {
             resetTranslation();
         }
@@ -154,10 +132,6 @@ public class SlidableImage extends AppCompatImageView {
 
     public void setStatusListener(StatusListener statusListener) {
         this.statusListener = statusListener;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     private void notifyStatus(boolean isToRight) {

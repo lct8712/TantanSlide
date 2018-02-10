@@ -54,7 +54,7 @@ public class SlideImageContainer extends FrameLayout {
     }
 
     private void generateSlidableImage() {
-        final SlidableImage slidableImage = new SlidableImage(getContext());
+        final TestSlidableImage slidableImage = new TestSlidableImage(getContext());
         FrameLayout.LayoutParams layoutParams =
             new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         layoutParams.setMargins(32, 32, 32, 32);
@@ -65,6 +65,7 @@ public class SlideImageContainer extends FrameLayout {
         slidableImage.setId(ColorProvider.getInstance(getContext()).getNextId());
 
         addView(slidableImage, layoutParams);
+        imageList.add(slidableImage);
 
         slidableImage.setStatusListener(new SlidableImage.StatusListener() {
             @Override
@@ -83,6 +84,5 @@ public class SlideImageContainer extends FrameLayout {
                 Log.d("chentian", "image go away: " + isToRight);
             }
         });
-        imageList.add(slidableImage);
     }
 }
