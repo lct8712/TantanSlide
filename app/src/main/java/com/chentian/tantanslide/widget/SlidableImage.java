@@ -60,14 +60,6 @@ public class SlidableImage extends AppCompatImageView {
         velocityHelper = new VelocityHelper();
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        int size = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
-        setMeasuredDimension(size, size);
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -232,7 +224,7 @@ public class SlidableImage extends AppCompatImageView {
             return;
         }
 
-        float rotation = getTranslationX() / getWidth() / 2 * 30;
+        float rotation = getTranslationX() / getWidth() / 2 * 10;
         if (eventDownY > getHeight() / 2) {
             rotation *= -1;
         }

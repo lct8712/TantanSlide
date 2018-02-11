@@ -1,15 +1,11 @@
 package com.chentian.tantanslide.widget;
 
 import android.content.Context;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
-
-import com.chentian.tantanslide.R;
-import com.chentian.tantanslide.data.ColorProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +16,7 @@ import java.util.List;
 public class SlideImageContainer extends FrameLayout {
 
     private static final int IMAGE_COUNT_PER_PAGE = 10;
-    private static final int IMAGE_MARGIN = 64;
+    private static final int IMAGE_MARGIN = 48;
 
     private List<SlidableImage> imageList;
 
@@ -59,11 +55,6 @@ public class SlideImageContainer extends FrameLayout {
         FrameLayout.LayoutParams layoutParams =
             new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         layoutParams.setMargins(IMAGE_MARGIN, IMAGE_MARGIN, IMAGE_MARGIN, IMAGE_MARGIN);
-
-        slidableImage.setBackgroundResource(R.drawable.photo_with_frame);
-        GradientDrawable shapeDrawable = (GradientDrawable) slidableImage.getBackground();
-        shapeDrawable.setColor(ColorProvider.getInstance(getContext()).getNextColor());
-        slidableImage.setId(ColorProvider.getInstance(getContext()).getNextId());
 
         addView(slidableImage, layoutParams);
         imageList.add(slidableImage);

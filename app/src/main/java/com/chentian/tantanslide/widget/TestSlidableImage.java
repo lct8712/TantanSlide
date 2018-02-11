@@ -4,10 +4,12 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 
 import com.chentian.tantanslide.R;
+import com.chentian.tantanslide.data.ColorProvider;
 
 /**
  * 自己绘制一个图案，方便 Demo
@@ -19,6 +21,7 @@ public class TestSlidableImage extends SlidableImage {
     private Paint textPaint;
     private String id;
     private Rect textBounds;
+    private int size;
 
     public TestSlidableImage(Context context) {
         this(context, null);
@@ -31,6 +34,8 @@ public class TestSlidableImage extends SlidableImage {
     public TestSlidableImage(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
+        initDrawable();
+
         textPaint = new Paint();
         textPaint.setColor(getResources().getColor(R.color.window_background));
         textBounds = new Rect();
@@ -39,6 +44,9 @@ public class TestSlidableImage extends SlidableImage {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        size = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
+        setMeasuredDimension(size, (int) (size * 1.2));
 
         textPaint.setTextSize(getMeasuredWidth() / 10);
         textPaint.getTextBounds(id, 0, id.length(), textBounds);
@@ -51,7 +59,12 @@ public class TestSlidableImage extends SlidableImage {
         canvas.drawText(id, (getWidth() - textBounds.width()) / 2, (getHeight() + textBounds.height()) / 2, textPaint);
     }
 
-    public void setId(String id) {
-        this.id = id;
+    private void initDrawable() {
+        setBackgroundResource(R.drawable.photo_with_frame);
+        GradientDrawable shapeDrawable = (GradientDrawable) getBackground();
+        shapeDrawable.setColor(ColorProvider.getInstance(getContext()).getNextColor());
+        shapeDrawable.setSize(500, 500);
+
+        id = ColorProvider.getInstance(getContext()).getNextId();
     }
 }
