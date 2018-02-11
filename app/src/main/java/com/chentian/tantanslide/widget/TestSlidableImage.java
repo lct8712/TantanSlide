@@ -46,7 +46,7 @@ public class TestSlidableImage extends SlidableImage {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         size = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
-        setMeasuredDimension(size, (int) (size * 1.2));
+        setMeasuredDimension(size, (int) (size * 1.4));
 
         textPaint.setTextSize(getMeasuredWidth() / 10);
         textPaint.getTextBounds(id, 0, id.length(), textBounds);

@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.Pair;
 import android.view.MotionEvent;
 
@@ -16,6 +17,9 @@ import android.view.MotionEvent;
  * @author chentian
  */
 public class SlidableImage extends AppCompatImageView {
+
+    private static final float[] STACK_SCALE_LIST = new float[] { 1f, 0.95f, 0.925f, 0.9f };
+    private static final float[] STACK_TRANSLATE_LIST = new float[] { 0f, 4f, 8f, 12f };
 
     public interface StatusListener {
 
@@ -38,6 +42,8 @@ public class SlidableImage extends AppCompatImageView {
     private float lastY;
     private float eventDownY;
 
+    private int stackPosition;
+    private int originHeight;
     private boolean isAnimating;
     private boolean isGoAway;
     private Handler mainThreadHandler;
@@ -58,6 +64,14 @@ public class SlidableImage extends AppCompatImageView {
 
         mainThreadHandler = new Handler(Looper.getMainLooper());
         velocityHelper = new VelocityHelper();
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        originHeight = MeasureSpec.getSize(heightMeasureSpec);
+        updateStackPosition(0f);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -84,8 +98,8 @@ public class SlidableImage extends AppCompatImageView {
     }
 
     public void handlePassiveMove(float translationX, float translationY) {
-        setTranslationX(-translationX / 15);
-        setTranslationY(-translationY / 40);
+        float translation = (float) Math.sqrt(translationX * translationX + translationY * translationY);
+        updateStackPosition(translation);
     }
 
     public void resetPositionWithAnmi() {
@@ -99,6 +113,30 @@ public class SlidableImage extends AppCompatImageView {
 
     public void destroy() {
         this.statusListener = null;
+    }
+
+    public void setStackPosition(int stackPosition) {
+        this.stackPosition = stackPosition;
+        Log.d("chentian", "setStackPosition: " + stackPosition);
+    }
+
+    private void updateStackPosition(float translation) {
+        if (isAnimating || originHeight <= 0) {
+            return;
+        }
+
+        float percent = Math.abs(translation) * 2f / originHeight;
+        stackPosition = Math.min(stackPosition, STACK_SCALE_LIST.length - 1);
+        float scale = STACK_SCALE_LIST[stackPosition];
+        scale = Math.min(1.0f, scale + percent / 20);
+        scale = Math.min(scale, stackPosition > 0 ? STACK_SCALE_LIST[stackPosition - 1] : 1f);
+        setTranslationY(originHeight * (1f - scale) / 2f + STACK_TRANSLATE_LIST[stackPosition]);
+        setScaleX(scale);
+        setScaleY(scale);
+        Log.d("chentian", "position: " + stackPosition + ", scale: " + scale);
+        //Log.d("chentian", "position: " + stackPosition + ", TranslationY: " + getTranslationY());
+        //Log.d("chentian", "position: " + stackPosition + ", height: " + height);
+        //Log.d("chentian", "position: " + stackPosition + ", height: " + getMeasuredHeight());
     }
 
     private void handleEventDown(MotionEvent event) {
@@ -166,9 +204,9 @@ public class SlidableImage extends AppCompatImageView {
     }
 
     private boolean isCloseToBorder() {
-        final int minBorderWidth = 250;
-        return (getWidth() - Math.abs(getTranslationX()) <= minBorderWidth) ||
-            (getHeight() - Math.abs(getTranslationY()) <= minBorderWidth);
+        final int borderFactor = 4;
+        return (getWidth() - Math.abs(getTranslationX()) <= getWidth() / borderFactor) ||
+            (getHeight() - Math.abs(getTranslationY()) <= getHeight() / borderFactor);
     }
 
     private void goAway(final float dx, final float dy) {

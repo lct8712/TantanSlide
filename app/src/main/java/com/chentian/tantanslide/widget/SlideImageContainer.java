@@ -56,6 +56,7 @@ public class SlideImageContainer extends FrameLayout {
             new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         layoutParams.setMargins(IMAGE_MARGIN, IMAGE_MARGIN, IMAGE_MARGIN, IMAGE_MARGIN);
 
+        slidableImage.setStackPosition(imageList.size());
         addView(slidableImage, layoutParams);
         imageList.add(slidableImage);
 
@@ -63,8 +64,8 @@ public class SlideImageContainer extends FrameLayout {
             @Override
             public void onMove(float translationX, float translationY) {
                 int index = imageList.indexOf(slidableImage);
-                if (imageList.size() > index) {
-                    imageList.get(index + 1).handlePassiveMove(translationX, translationY);
+                for (int i = index + 1; i <= index + 3 && index < imageList.size(); i++) {
+                    imageList.get(i).handlePassiveMove(translationX, translationY);
                 }
             }
 
@@ -78,9 +79,7 @@ public class SlideImageContainer extends FrameLayout {
                 }, 3 * DateUtils.SECOND_IN_MILLIS);
 
                 int index = imageList.indexOf(slidableImage);
-                if (imageList.size() > index) {
-                    imageList.get(index + 1).resetPositionWithAnmi();
-                }
+                updateInitialPosition(index + 1);
 
                 imageList.remove(slidableImage);
                 slidableImage.destroy();
@@ -90,5 +89,11 @@ public class SlideImageContainer extends FrameLayout {
                 Log.d("chentian", "image go away: " + isToRight);
             }
         });
+    }
+
+    private void updateInitialPosition(int startIndex) {
+        for (int i = startIndex; i < imageList.size(); i++) {
+            imageList.get(i).setStackPosition(i - startIndex);
+        }
     }
 }
