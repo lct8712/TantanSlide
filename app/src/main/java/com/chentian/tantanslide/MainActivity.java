@@ -3,7 +3,7 @@ package com.chentian.tantanslide;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.chentian.tantanslide.widget.SlideImageContainer;
+import com.chentian.tantanslide.widget.SlideCardContainer;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -12,7 +12,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SlideImageContainer slideImageContainer = findViewById(R.id.slide_image_container);
-        slideImageContainer.loadData();
+        SlideCardContainer slideCardContainer = findViewById(R.id.slide_card_container);
+        slideCardContainer.loadData();
     }
 }

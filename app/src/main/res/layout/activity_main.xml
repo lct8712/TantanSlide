@@ -6,8 +6,8 @@
     android:layout_height="match_parent"
     tools:context="com.chentian.tantanslide.MainActivity">
 
-    <com.chentian.tantanslide.widget.SlideImageContainer
-        android:id="@+id/slide_image_container"
+    <com.chentian.tantanslide.widget.SlideCardContainer
+        android:id="@+id/slide_card_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

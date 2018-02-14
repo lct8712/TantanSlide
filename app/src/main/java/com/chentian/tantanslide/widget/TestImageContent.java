@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 
 import com.chentian.tantanslide.R;
@@ -16,22 +17,21 @@ import com.chentian.tantanslide.data.ColorProvider;
  *
  * @author chentian
  */
-public class TestSlidableImage extends SlidableImage {
+public class TestImageContent extends AppCompatImageView {
 
     private Paint textPaint;
     private String id;
     private Rect textBounds;
-    private int size;
 
-    public TestSlidableImage(Context context) {
+    public TestImageContent(Context context) {
         this(context, null);
     }
 
-    public TestSlidableImage(Context context, @Nullable AttributeSet attrs) {
+    public TestImageContent(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TestSlidableImage(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public TestImageContent(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         initDrawable();
@@ -45,7 +45,7 @@ public class TestSlidableImage extends SlidableImage {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        size = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
+        int size = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
         setMeasuredDimension(size, (int) (size * 1.4));
 
         textPaint.setTextSize(getMeasuredWidth() / 10);

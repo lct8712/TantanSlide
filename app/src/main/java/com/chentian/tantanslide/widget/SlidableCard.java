@@ -5,18 +5,17 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.Pair;
 import android.view.MotionEvent;
+import android.widget.FrameLayout;
 
 /**
- * 可被左滑右划的 ImageView
+ * 可被左滑右划的卡片
  *
  * @author chentian
  */
-public class SlidableImage extends AppCompatImageView {
+public class SlidableCard extends FrameLayout {
 
     private static final float[] STACK_SCALE_LIST = new float[] { 1f, 0.95f, 0.925f, 0.9f };
     private static final float[] STACK_TRANSLATE_LIST = new float[] { 0f, 4f, 8f, 12f };
@@ -50,15 +49,15 @@ public class SlidableImage extends AppCompatImageView {
 
     private StatusListener statusListener;
 
-    public SlidableImage(Context context) {
+    public SlidableCard(Context context) {
         this(context, null);
     }
 
-    public SlidableImage(Context context, @Nullable AttributeSet attrs) {
+    public SlidableCard(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public SlidableImage(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public SlidableCard(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         mainThreadHandler = new Handler(Looper.getMainLooper());
@@ -240,16 +239,15 @@ public class SlidableImage extends AppCompatImageView {
         setTranslationX(getTranslationX() + vx);
         setTranslationY(getTranslationY() + vy);
 
-        Log.d("chentian", "vx: " + vx + ", vy: " + vy);
-
         updateRotation();
         notifyOnMove();
 
         mainThreadHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                final float acceleratedFactor = 20f;
-                final float frictionFactor = 0.80f;
+                // acceleratedFactor 越小，速度越快；frictionFactor 越小，阻力越大
+                final float acceleratedFactor = 18f;
+                final float frictionFactor = 0.75f;
                 float ax = -getTranslationX() / acceleratedFactor;
                 float ay = -getTranslationY() / acceleratedFactor;
                 backToCenter((vx + ax) * frictionFactor, (vy + ay) * frictionFactor);
