@@ -4,13 +4,14 @@ import android.content.Context;
 import android.os.Handler;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 卡片的容器
+ *
  * @author chentian
  */
 public class SlideImageContainer extends FrameLayout {
@@ -44,7 +45,6 @@ public class SlideImageContainer extends FrameLayout {
     }
 
     private void loadMore() {
-        Log.d("chentian", "SlideImageContainer load more, child view count: " + getChildCount());
         for (int i = 0; i < IMAGE_COUNT_PER_PAGE; i++) {
             generateSlidableImage();
         }
@@ -86,7 +86,6 @@ public class SlideImageContainer extends FrameLayout {
                 if (imageList.size() < IMAGE_COUNT_PER_PAGE / 2) {
                     loadMore();
                 }
-                Log.d("chentian", "image go away: " + isToRight);
             }
         });
     }

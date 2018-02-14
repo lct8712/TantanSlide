@@ -20,6 +20,7 @@ public class SlidableImage extends AppCompatImageView {
 
     private static final float[] STACK_SCALE_LIST = new float[] { 1f, 0.95f, 0.925f, 0.9f };
     private static final float[] STACK_TRANSLATE_LIST = new float[] { 0f, 4f, 8f, 12f };
+    private static final long FRAME_DELAY_MILLIS = 16L;
 
     public interface StatusListener {
 
@@ -35,8 +36,6 @@ public class SlidableImage extends AppCompatImageView {
          */
         void onGoAway(boolean isToRight);
     }
-
-    private static final long FRAME_DELAY_MILLIS = 16L;
 
     private float lastX;
     private float lastY;
@@ -97,14 +96,13 @@ public class SlidableImage extends AppCompatImageView {
         return true;
     }
 
+    /**
+     * 处理被动的移动
+     * 即当前卡片不在栈顶时，栈顶卡片移动之后的联动
+     */
     public void handlePassiveMove(float translationX, float translationY) {
         float translation = (float) Math.sqrt(translationX * translationX + translationY * translationY);
         updateStackPosition(translation);
-    }
-
-    public void resetPositionWithAnmi() {
-        isAnimating = true;
-        backToCenter();
     }
 
     public void setStatusListener(StatusListener statusListener) {
@@ -115,9 +113,12 @@ public class SlidableImage extends AppCompatImageView {
         this.statusListener = null;
     }
 
+    /**
+     * 设置在栈的第几个位置
+     * 0 表示栈顶
+     */
     public void setStackPosition(int stackPosition) {
         this.stackPosition = stackPosition;
-        Log.d("chentian", "setStackPosition: " + stackPosition);
     }
 
     private void updateStackPosition(float translation) {
@@ -133,10 +134,6 @@ public class SlidableImage extends AppCompatImageView {
         setTranslationY(originHeight * (1f - scale) / 2f + STACK_TRANSLATE_LIST[stackPosition]);
         setScaleX(scale);
         setScaleY(scale);
-        Log.d("chentian", "position: " + stackPosition + ", scale: " + scale);
-        //Log.d("chentian", "position: " + stackPosition + ", TranslationY: " + getTranslationY());
-        //Log.d("chentian", "position: " + stackPosition + ", height: " + height);
-        //Log.d("chentian", "position: " + stackPosition + ", height: " + getMeasuredHeight());
     }
 
     private void handleEventDown(MotionEvent event) {
@@ -174,6 +171,7 @@ public class SlidableImage extends AppCompatImageView {
         velocityHelper.record(event.getRawX(), event.getRawY());
         final float minSpeedForGoAway = 2f;
         if (velocityHelper.computeVelocity() >= minSpeedForGoAway) {
+            // 正常的划走
             Pair<Float, Float> velocity = velocityHelper.computeVelocityWithDirection();
             float multi = 15f;
             float maxDelta = Math.max(Math.abs(velocity.first), Math.abs(velocity.second));
@@ -188,14 +186,16 @@ public class SlidableImage extends AppCompatImageView {
             isGoAway = true;
 
         } else if (isCloseToBorder()) {
-            float dx = 15 * getSign(getTranslationX());
-            float dy = 15 * getSign(getTranslationY());
+            // 靠近边缘后，即使停住，也会划走
+            float dx = 15f * getSign(getTranslationX());
+            float dy = 15f * getSign(getTranslationY());
             goAway(dx, dy);
             notifyGoAway(dx >= 0);
             isGoAway = true;
 
         } else {
-            backToCenter();
+            // 回弹到原位
+            backToCenter(0f, 0f);
         }
     }
 
@@ -204,9 +204,9 @@ public class SlidableImage extends AppCompatImageView {
     }
 
     private boolean isCloseToBorder() {
-        final int borderFactor = 4;
-        return (getWidth() - Math.abs(getTranslationX()) <= getWidth() / borderFactor) ||
-            (getHeight() - Math.abs(getTranslationY()) <= getHeight() / borderFactor);
+        final float mainContentPercent = 0.7f;
+        return (Math.abs(getTranslationX()) / getWidth() > mainContentPercent) ||
+            (Math.abs(getTranslationY() / getHeight()) > mainContentPercent);
     }
 
     private void goAway(final float dx, final float dy) {
@@ -225,26 +225,22 @@ public class SlidableImage extends AppCompatImageView {
         }, FRAME_DELAY_MILLIS);
     }
 
-    private void backToCenter() {
+    private void backToCenter(final float vx, final float vy) {
         if (!isAnimating) {
             return;
         }
 
-        float dx = Math.abs(getTranslationX() * 0.15f) + 1.0f;
-        float dy = Math.abs(getTranslationY() * 0.15f) + 1.0f;
-        final float minTranslationToNormal = 1.1f;
-        if (dx <= minTranslationToNormal && dy <= minTranslationToNormal) {
+        final float minTranslation = 1.1f;
+        final float minVelocity = 1.5f;
+        if (Math.abs(getTranslationX()) < minTranslation && Math.abs(getTranslationY()) < minTranslation &&
+            Math.abs(vx) < minVelocity && Math.abs(vy) < minVelocity) {
             return;
         }
 
-        if (getTranslationX() < 0) {
-            dx *= -1;
-        }
-        if (getTranslationY() < 0) {
-            dy *= -1;
-        }
-        setTranslationX(getTranslationX() - dx);
-        setTranslationY(getTranslationY() - dy);
+        setTranslationX(getTranslationX() + vx);
+        setTranslationY(getTranslationY() + vy);
+
+        Log.d("chentian", "vx: " + vx + ", vy: " + vy);
 
         updateRotation();
         notifyOnMove();
@@ -252,7 +248,11 @@ public class SlidableImage extends AppCompatImageView {
         mainThreadHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                backToCenter();
+                final float acceleratedFactor = 20f;
+                final float frictionFactor = 0.80f;
+                float ax = -getTranslationX() / acceleratedFactor;
+                float ay = -getTranslationY() / acceleratedFactor;
+                backToCenter((vx + ax) * frictionFactor, (vy + ay) * frictionFactor);
             }
         }, FRAME_DELAY_MILLIS);
     }
