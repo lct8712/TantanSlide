@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
@@ -36,6 +37,14 @@ public class SlideCardContainer extends FrameLayout {
     @Override
     protected int getChildDrawingOrder(int childCount, int i) {
         return childCount - i - 1;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if ((ev.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_POINTER_DOWN) {
+            return false;
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     public void loadData() {
